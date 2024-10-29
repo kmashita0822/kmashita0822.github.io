@@ -1,11 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
+<!-- Previous head and styles remain exactly the same -->
 <head>
+    <!-- Previous head content exactly the same -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Your Portfolio</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-optimization/1.0.30/font.min.css">
     <style>
+        /* Previous styles remain exactly the same */
         * {
             margin: 0;
             padding: 0;
@@ -140,10 +143,9 @@
                 <p>coming!</p>
             </div>
         </section>
+    </div>
 
-    <!-- Previous canvas animation script remains exactly the same -->
     <script>
-        // Your existing canvas animation code here...
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
 
@@ -170,9 +172,25 @@
                 this.angle = Math.random() * Math.PI * 2;
                 this.inHurricane = false;
                 this.opacity = Math.random() * 0.3 + 0.2;
+                this.explosionSpeed = 0;
+                this.exploding = false;
             }
 
             update(hurricane) {
+                if (this.exploding) {
+                    // Explosion behavior
+                    this.x += Math.cos(this.angle) * this.explosionSpeed;
+                    this.y += Math.sin(this.angle) * this.explosionSpeed;
+                    this.explosionSpeed *= 0.98; // Slow down explosion
+                    this.opacity *= 0.98; // Fade out
+
+                    if (this.opacity < 0.01) {
+                        this.reset();
+                        this.exploding = false;
+                    }
+                    return;
+                }
+
                 if (!this.inHurricane) {
                     this.x += Math.cos(this.angle) * this.speed;
                     this.y += Math.sin(this.angle) * this.speed;
@@ -187,14 +205,22 @@
                     const dist = Math.sqrt(dx * dx + dy * dy);
                     
                     if (dist < hurricane.radius) {
-                        this.angle += 0.02;
-                        const targetX = hurricane.x + Math.cos(this.angle) * dist;
-                        const targetY = hurricane.y + Math.sin(this.angle) * dist;
-                        
-                        this.x += (targetX - this.x) * 0.03;
-                        this.y += (targetY - this.y) * 0.03;
-                        
-                        this.opacity = 0.2 + (1 - dist / hurricane.radius) * 0.3;
+                        if (hurricane.exploding) {
+                            // Start particle explosion
+                            this.exploding = true;
+                            this.explosionSpeed = Math.random() * 15 + 5;
+                            this.angle = Math.atan2(this.y - hurricane.y, this.x - hurricane.x);
+                            this.inHurricane = false;
+                        } else {
+                            this.angle += 0.02;
+                            const targetX = hurricane.x + Math.cos(this.angle) * dist;
+                            const targetY = hurricane.y + Math.sin(this.angle) * dist;
+                            
+                            this.x += (targetX - this.x) * 0.03;
+                            this.y += (targetY - this.y) * 0.03;
+                            
+                            this.opacity = 0.2 + (1 - dist / hurricane.radius) * 0.3;
+                        }
                     } else {
                         this.inHurricane = false;
                     }
@@ -225,9 +251,19 @@
                 this.active = true;
                 this.moveSpeed = 0.001 + Math.random() * 0.001;
                 this.formationProgress = 0;
+                this.exploding = false;
             }
 
             update() {
+                if (this.exploding) {
+                    this.radius *= 1.1;
+                    this.opacity *= 0.95;
+                    if (this.radius > canvas.width) {
+                        this.active = false;
+                    }
+                    return;
+                }
+
                 this.lifetime++;
                 
                 const dx = this.targetX - this.x;
@@ -247,7 +283,7 @@
                     this.radius = 150 * this.formationProgress;
                 }
 
-                if (this.lifetime > this.maxLifetime - 100) {
+                if (this.lifetime > this.maxLifetime - 100 && !this.exploding) {
                     this.formationProgress = (this.maxLifetime - this.lifetime) / 100;
                     this.radius = 150 * this.formationProgress;
                     if (this.formationProgress <= 0) {
@@ -277,8 +313,9 @@
             hurricanes.forEach(h => {
                 const dx = mouse.x - h.x;
                 const dy = mouse.y - h.y;
-                if (Math.sqrt(dx * dx + dy * dy) < 200) {
-                    h.maxLifetime = h.lifetime + 100;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                if (dist < 200 && !h.exploding) {
+                    h.exploding = true; // Start the explosion
                 }
             });
         });
