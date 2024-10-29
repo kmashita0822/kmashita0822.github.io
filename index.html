@@ -221,7 +221,7 @@
                     this.y += Math.sin(currentAngle) * this.speed * windForce;
 
                     // Improved wrapping logic with buffer
-                    const buffer = 100; // Increased buffer zone
+                    const buffer = 0; // Increased buffer zone
                     if (this.x < -buffer) this.x = canvas.width + buffer;
                     if (this.x > canvas.width + buffer) this.x = -buffer;
                     if (this.y < -buffer) this.y = canvas.height + buffer;
