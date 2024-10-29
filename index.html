@@ -228,7 +228,7 @@
                     if (this.y > canvas.height + buffer) this.y = -buffer;
 
                     // More gradual edge fading
-                    const edgeFade = 100;
+                    const edgeFade = 5;
                     const edgeOpacity = 0.98;
                     if (this.x < edgeFade || this.x > canvas.width - edgeFade) this.opacity *= edgeOpacity;
                     if (this.y < edgeFade || this.y > canvas.height - edgeFade) this.opacity *= edgeOpacity;
