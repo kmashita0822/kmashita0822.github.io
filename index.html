@@ -1,14 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
-<!-- Previous head and styles remain exactly the same -->
 <head>
-    <!-- Previous head content exactly the same -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Your Portfolio</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-optimization/1.0.30/font.min.css">
     <style>
-        /* Previous styles remain exactly the same */
         * {
             margin: 0;
             padding: 0;
@@ -20,12 +17,17 @@
             color: #fff;
             overflow-x: hidden;
             font-family: 'EB Garamond', Georgia, serif;
+            width: 100%;
+            height: 100%;
+            position: relative;
         }
 
         #canvas {
             position: fixed;
             top: 0;
             left: 0;
+            width: 100vw;
+            height: 100vh;
             z-index: -1;
         }
 
@@ -33,6 +35,7 @@
             max-width: 1200px;
             margin: 0 auto;
             padding: 2rem;
+            position: relative;
         }
 
         section {
@@ -153,10 +156,24 @@
         let hurricanes = [];
         const maxHurricanes = 2;
         let mouse = { x: undefined, y: undefined };
+        let windAngle = Math.PI * 0.75;
+        let windStrength = 1;
+        let time = 0;
 
         function resizeCanvas() {
+            // Set to window inner dimensions for full coverage
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
+            
+            // Reinitialize particles when screen is resized
+            initParticles();
+        }
+
+        // Initialize particles based on screen size
+        function initParticles() {
+            const area = canvas.width * canvas.height;
+            const particleCount = Math.floor(area / 2500); // Adjust density based on screen size
+            particles = Array.from({ length: particleCount }, () => new Particle());
         }
 
         class Particle {
@@ -168,21 +185,23 @@
                 this.x = Math.random() * canvas.width;
                 this.y = Math.random() * canvas.height;
                 this.size = Math.random() * 1.5 + 0.5;
-                this.speed = Math.random() * 0.5 + 0.2;
-                this.angle = Math.random() * Math.PI * 2;
+                this.baseSpeed = Math.random() * 0.5 + 0.2;
+                this.speed = this.baseSpeed;
+                this.angle = windAngle + (Math.random() - 0.5) * 0.5;
                 this.inHurricane = false;
                 this.opacity = Math.random() * 0.3 + 0.2;
                 this.explosionSpeed = 0;
                 this.exploding = false;
+                this.oscillationOffset = Math.random() * Math.PI * 2;
+                this.oscillationSpeed = Math.random() * 0.02 + 0.01;
             }
 
             update(hurricane) {
                 if (this.exploding) {
-                    // Explosion behavior
                     this.x += Math.cos(this.angle) * this.explosionSpeed;
                     this.y += Math.sin(this.angle) * this.explosionSpeed;
-                    this.explosionSpeed *= 0.98; // Slow down explosion
-                    this.opacity *= 0.98; // Fade out
+                    this.explosionSpeed *= 0.98;
+                    this.opacity *= 0.98;
 
                     if (this.opacity < 0.01) {
                         this.reset();
@@ -192,13 +211,29 @@
                 }
 
                 if (!this.inHurricane) {
-                    this.x += Math.cos(this.angle) * this.speed;
-                    this.y += Math.sin(this.angle) * this.speed;
+                    const oscillation = Math.sin(time * this.oscillationSpeed + this.oscillationOffset) * 0.3;
+                    const currentAngle = windAngle + oscillation;
+                    
+                    this.speed = this.baseSpeed * (1 + Math.sin(time * 0.001 + this.oscillationOffset) * 0.2);
+                    
+                    const windForce = windStrength * (1 + Math.sin(time * 0.0005) * 0.2);
+                    this.x += Math.cos(currentAngle) * this.speed * windForce;
+                    this.y += Math.sin(currentAngle) * this.speed * windForce;
 
-                    if (this.x < 0) this.x = canvas.width;
-                    if (this.x > canvas.width) this.x = 0;
-                    if (this.y < 0) this.y = canvas.height;
-                    if (this.y > canvas.height) this.y = 0;
+                    // Improved wrapping logic with buffer
+                    const buffer = 100; // Increased buffer zone
+                    if (this.x < -buffer) this.x = canvas.width + buffer;
+                    if (this.x > canvas.width + buffer) this.x = -buffer;
+                    if (this.y < -buffer) this.y = canvas.height + buffer;
+                    if (this.y > canvas.height + buffer) this.y = -buffer;
+
+                    // More gradual edge fading
+                    const edgeFade = 100;
+                    const edgeOpacity = 0.98;
+                    if (this.x < edgeFade || this.x > canvas.width - edgeFade) this.opacity *= edgeOpacity;
+                    if (this.y < edgeFade || this.y > canvas.height - edgeFade) this.opacity *= edgeOpacity;
+
+                    if (this.opacity < 0.2) this.reset();
                 } else {
                     const dx = hurricane.x - this.x;
                     const dy = hurricane.y - this.y;
@@ -206,7 +241,6 @@
                     
                     if (dist < hurricane.radius) {
                         if (hurricane.exploding) {
-                            // Start particle explosion
                             this.exploding = true;
                             this.explosionSpeed = Math.random() * 15 + 5;
                             this.angle = Math.atan2(this.y - hurricane.y, this.x - hurricane.x);
@@ -300,7 +334,6 @@
 
         function initSystem() {
             resizeCanvas();
-            particles = Array.from({ length: 400 }, () => new Particle());
             hurricanes = [];
         }
 
@@ -315,7 +348,7 @@
                 const dy = mouse.y - h.y;
                 const dist = Math.sqrt(dx * dx + dy * dy);
                 if (dist < 200 && !h.exploding) {
-                    h.exploding = true; // Start the explosion
+                    h.exploding = true;
                 }
             });
         });
@@ -323,6 +356,11 @@
         function animate() {
             ctx.fillStyle = 'rgba(10, 10, 10, 0.05)';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            time++;
+            
+            windAngle += Math.sin(time * 0.0002) * 0.001;
+            windStrength = 1 + Math.sin(time * 0.0003) * 0.2;
 
             hurricanes = hurricanes.filter(h => h.active);
             
