@@ -112,8 +112,8 @@
         <section id="home">
             <div class="hero">
                 <h1>Koki Mashita</h1>
-                <p class="subtitle">Friedrich Nietzsche:
-"There are no natural disasters - there is only nature, which knows neither good nor evil. The disaster lies in our interpretation of these events."</p>
+                <p class="subtitle"> "There is only nature, which knows neither good nor evil. The disaster lies in our interpretation of these events."</p>
+                <p class="subtitle"> Friedrich Nietzsche
                 <div class="social-links">
                     <a href="https://linkedin.com/in/kokimashita">LinkedIn</a>
                     <a href="mailto:koki@mashita.org">Email</a>
@@ -204,13 +204,13 @@
                     this.x += Math.cos(currentAngle) * this.speed * windForce;
                     this.y += Math.sin(currentAngle) * this.speed * windForce;
 
-                    const buffer = 50;
+                    const buffer = 5;
                     if (this.x < -buffer) this.x = canvas.width + buffer;
                     if (this.x > canvas.width + buffer) this.x = -buffer;
                     if (this.y < -buffer) this.y = canvas.height + buffer;
                     if (this.y > canvas.height + buffer) this.y = -buffer;
 
-                    const edgeFade = 100;
+                    const edgeFade = 5;
                     const edgeOpacity = 0.99;
                     if (this.x < edgeFade || this.x > canvas.width - edgeFade) this.opacity *= edgeOpacity;
                     if (this.y < edgeFade || this.y > canvas.height - edgeFade) this.opacity *= edgeOpacity;
